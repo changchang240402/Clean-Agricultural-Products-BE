@@ -1,0 +1,48 @@
+version: '3.7'
+services:
+    app:
+        build:
+            context: .
+            dockerfile: ./docker/Dockerfile
+        container_name: agri_app
+        working_dir: /var/www/html
+        depends_on:
+            - mysql
+            - mailpit
+        ports:
+            - 8080:80
+        volumes:
+            - ./:/var/www/html
+            - ./docker/nginx_log:/var/log/nginx
+            - ./docker/php-fpm/php-fpm.log:/var/log/php-fpm.log
+            - ./docker/config/app.conf:/etc/nginx/conf.d/app.conf
+        networks:
+            - backend_network
+    mysql:
+        image: mysql:8.1
+        container_name: agri_mysql
+        restart: unless-stopped
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: agri
+            MYSQL_ROOT_PASSWORD: password
+        volumes:
+            - agri-db:/var/lib/mysql/
+        networks:
+            - backend_network
+    # mailpit - mail service
+    mailpit:
+        image: axllent/mailpit
+        container_name: agri_mailpit
+        ports:
+            - "1025:1025"
+            - "8025:8025"
+        networks:
+            - backend_network
+networks:
+    backend_network:
+
+volumes:
+    agri-db:
+        driver: local
